@@ -9,10 +9,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define :zabbix do |zabbix_config|
       zabbix_config.vm.host_name = "zabbix"
       zabbix_config.vm.network "private_network", ip:"192.168.100.10"
-      config.vm.provider :virtualbox do |vb|
+      zabbix_config.vm.provider :virtualbox do |vb|
           vb.customize ["modifyvm", :id, "--memory", "256"]
           vb.customize ["modifyvm", :id, "--cpus", "1"]
       end
+      zabbix_config.vm.provision "shell", path: "scripts/zabbix_provision.sh"
   end
 
   config.vm.define :web do |web_config|

@@ -8,6 +8,7 @@ yum install zabbix-web-pgsql.noarch -y
 
 # configure
 chkconfig --add httpd
+chkconfig httpd on
 sed -i "s/^;date.timezone =$/date.timezone = \"Europe\/Moscow\"/" /etc/php.ini |grep "^timezone" /etc/php.ini
 iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
 
