@@ -29,9 +29,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define :db do |db_config|
       db_config.vm.host_name = "db"
       db_config.vm.network "private_network", ip:"192.168.100.30"
-      config.vm.provider :virtualbox do |vb|
+      db_config.vm.provider :virtualbox do |vb|
           vb.customize ["modifyvm", :id, "--memory", "256"]
           vb.customize ["modifyvm", :id, "--cpus", "1"]
       end
+      db_config.vm.provision "shell", path: "scripts/db_provision.sh"
   end
 end
