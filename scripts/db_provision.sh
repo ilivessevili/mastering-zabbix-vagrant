@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 if [ -f "/var/vagrant_provision" ]; then
     exit 0
@@ -36,6 +37,9 @@ chmod 600 ~/.pgpass
 cat schema.sql | psql -h 192.168.100.30 -U zabbix zabbix_db
 cat images.sql | psql -h 192.168.100.30 -U zabbix zabbix_db
 cat data.sql | psql -h 192.168.100.30 -U zabbix zabbix_db
+
+wget https://raw.githubusercontent.com/smartmarmot/Mastering_Zabbix/master/chapter1/PostgreSQL_Zabbix_Partitioning.sql -O /tmp/PostgreSQL_Zabbix_Partitioning.sql
+sudo -u postgres psql -d zabbix_db -a -f /tmp/PostgreSQL_Zabbix_Partitioning.sql
 
 chkconfig --add postgresql-9.4
 chkconfig postgresql-9.4 on
