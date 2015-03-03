@@ -1,5 +1,9 @@
 #!/bin/sh
 
+if [ -f "/var/vagrant_provision" ]; then
+    exit 0
+fi
+
 echo "Provisioning web front end"
 
 # install
@@ -14,4 +18,6 @@ iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
 
 # start
 /etc/init.d/httpd start
+
+touch /var/vagrant_provision
 echo "Provisioning finished."
