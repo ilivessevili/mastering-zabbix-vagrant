@@ -60,7 +60,18 @@ EOF
 
 /etc/init.d/httpd restart
 
-echo primitive vip ocf:heartbeat:IPaddr2 params ip="10.0.0.100" nic="eth1" cidr_netmask="24" op start interval="0s" timeout="50s" op monitor interval="5s" timeout="20s" op stop interval="0s" timeout="50s" | crm configure
+echo primitive vip ocf:heartbeat:IPaddr2 params \
+     ip="10.0.0.100" nic="eth1" cidr_netmask="24" \
+     op start interval="0s" timeout="50s" op monitor \
+     interval="5s" timeout="20s" op stop interval="0s" \
+     timeout="50s" | crm configure
+
+echo primitive httpd ocf:heartbeat:apache params \
+     configfile="/etc/httpd/conf/httpd.conf" port="80" \
+     op start interval="0s" timeout="50s" op monitor interval="5s" \
+     timeout="20s" op stop interval="0s" timeout="50s" | crm configure
+
+echo group webserver vip httpd | crm configure
 
 # TODO: this should be fixed, for now turn off firewall at all
 iptables -F
