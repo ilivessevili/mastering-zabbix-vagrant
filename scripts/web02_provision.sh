@@ -16,6 +16,15 @@ chkconfig httpd on
 sed -i "s/^;date.timezone =$/date.timezone = \"Europe\/Moscow\"/" /etc/php.ini |grep "^timezone" /etc/php.ini
 iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
 
+cat <<'EOF' >> /etc/httpd/conf/httpd.conf
+<Location /server-status>
+   SetHandler server-status
+   Order deny,allow
+   Deny from all
+   Allow from 127.0.0.1 192.168.100.0/24
+</Location>
+EOF
+
 # start
 /etc/init.d/httpd start
 
