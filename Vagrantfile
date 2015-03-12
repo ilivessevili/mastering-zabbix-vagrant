@@ -6,7 +6,8 @@ VAGRANTFILE_API_VERSION = "2"
 # Hosts configuration parameters
 WEB01_HOST_IP = "192.168.100.20"
 WEB02_HOST_IP = "192.168.100.21"
-ZBX_HOST_IP = "192.168.100.10"
+ZBX01_HOST_IP = "192.168.100.10"
+ZBX02_HOST_IP = "192.168.100.11"
 PG_HOST_IP  = "192.168.100.30"
 
 DB_PASSWORD = 's3cr3t'
@@ -14,14 +15,24 @@ DB_PASSWORD = 's3cr3t'
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "puppetlabs/centos-6.6-64-nocm"
 
-  config.vm.define :zabbix do |zabbix_config|
-      zabbix_config.vm.host_name = "zabbix"
-      zabbix_config.vm.network "private_network", ip:ZBX_HOST_IP
-      zabbix_config.vm.provider :virtualbox do |vb|
+  config.vm.define :zabbix01 do |zabbix01_config|
+      zabbix01_config.vm.host_name = "zabbix01"
+      zabbix01_config.vm.network "private_network", ip:ZBX01_HOST_IP
+      zabbix01_config.vm.provider :virtualbox do |vb|
           vb.customize ["modifyvm", :id, "--memory", "256"]
           vb.customize ["modifyvm", :id, "--cpus", "1"]
       end
-      zabbix_config.vm.provision "shell", path: "scripts/zabbix_provision.sh", args: [DB_PASSWORD]
+      zabbix01_config.vm.provision "shell", path: "scripts/zabbix01_provision.sh", args: [DB_PASSWORD]
+  end
+
+  config.vm.define :zabbix02 do |zabbix02_config|
+      zabbix02_config.vm.host_name = "zabbix02"
+      zabbix02_config.vm.network "private_network", ip:ZBX02_HOST_IP
+      zabbix02_config.vm.provider :virtualbox do |vb|
+          vb.customize ["modifyvm", :id, "--memory", "256"]
+          vb.customize ["modifyvm", :id, "--cpus", "1"]
+      end
+      zabbix02_config.vm.provision "shell", path: "scripts/zabbix02_provision.sh", args: [DB_PASSWORD]
   end
 
   config.vm.define :web01 do |web01_config|
