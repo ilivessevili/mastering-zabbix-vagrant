@@ -16,6 +16,8 @@ DB_PASSWORD = 's3cr3t'
 VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 db01_disk01 = File.join(VAGRANT_ROOT, 'hdd/db01_disk01.vdi')
 db01_disk02 = File.join(VAGRANT_ROOT, 'hdd/db01_disk02.vdi')
+db02_disk01 = File.join(VAGRANT_ROOT, 'hdd/db02_disk01.vdi')
+db02_disk02 = File.join(VAGRANT_ROOT, 'hdd/db02_disk02.vdi')
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "puppetlabs/centos-6.6-64-nocm"

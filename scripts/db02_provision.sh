@@ -9,6 +9,13 @@ DB_PASSWORD=$1
 
 echo "Provisioning database"
 
+iptables -F
+
+cat <<'EOF' >> /etc/hosts
+192.168.100.30 db01
+192.168.100.31 db02
+EOF
+
 # exclude postgres from default repository
 pcregrep -q -M "\[base\]\nexclude=postgresql\*" /etc/yum.repos.d/CentOS-Base.repo || sed -i "s/^\[base\]$/\[base\]\nexclude=postgresql\*/" /etc/yum.repos.d/CentOS-Base.repo
 pcregrep -q -M "\[updates\]\nexclude=postgresql\*" /etc/yum.repos.d/CentOS-Base.repo || sed -i "s/^\[updates\]$/\[updates\]\nexclude=postgresql\*/" /etc/yum.repos.d/CentOS-Base.repo
@@ -40,9 +47,9 @@ echo "*:*:zabbix_db:zabbix:$DB_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
 
 # import db schemes
-cat schema.sql | psql -h 192.168.100.30 -U zabbix zabbix_db
-cat images.sql | psql -h 192.168.100.30 -U zabbix zabbix_db
-cat data.sql | psql -h 192.168.100.30 -U zabbix zabbix_db
+cat schema.sql | psql -v ON_ERROR_STOP=1 -h 192.168.100.30 -U zabbix zabbix_db
+cat images.sql | psql -v ON_ERROR_STOP=1 -h 192.168.100.30 -U zabbix zabbix_db
+cat data.sql | psql -v ON_ERROR_STOP=1 -h 192.168.100.30 -U zabbix zabbix_db
 
 # TODO: this step is temporaty disabled, because the SQL script is buggy.
 # get SQL script for db partitioning
@@ -88,6 +95,54 @@ chkconfig drbd off
 drbdadm create-md rpgdata0
 # enable rpgdata0 resource
 drbdadm up rpgdata0
+
+# ivalidate drbd resource
+n=0
+until [ $n -ge 20 ]
+do
+  drbdadm invalidate rpgdata0 && break
+  n=$[$n+1]
+  echo [$n] Waiting for first instance to be available...
+  sleep 15
+done
+
+if [ $n -ge 20 ]
+then
+  >&2 echo "Failed to set primary!"
+  exit 101
+fi
+
+# configure corosync/pacemaker
+yum install pacemaker corosync -y
+cp /etc/corosync/corosync.conf.example /etc/corosync/corosync.conf
+
+export MULTICAST_PORT=4000
+export MULTICAST_ADDRESS=226.94.1.2
+export BIND_NET_ADDRESS=`ip addr | grep "inet " |grep brd |tail -n1 | awk '{print $4}' | sed s/255/0/`
+
+sed -i.bak "s/ *mcastaddr:.*/mcastaddr:\ $MULTICAST_ADDRESS/g" /etc/corosync/corosync.conf
+sed -i.bak "s/ *mcastport:.*/mcastport:\ $MULTICAST_PORT/g" /etc/corosync/corosync.conf
+sed -i.bak "s/ *bindnetaddr:.*/bindnetaddr:\ $BIND_NET_ADDRESS/g" /etc/corosync/corosync.conf
+
+cat <<'EOF' > /etc/corosync/service.d/pcmk
+service {
+  # Load the Pacemaker Cluster Resource Manager
+  name: pacemaker
+  ver: 1
+}
+EOF
+
+/etc/init.d/corosync start
+/etc/init.d/pacemaker start
+
+wget http://download.opensuse.org/repositories/network:/ha-clustering:/Stable/CentOS_CentOS-6/network:ha-clustering:Stable.repo -O /etc/yum.repos.d/etwork:ha-clustering:Stable.repo
+yum install crmsh -y
+
+crm configure property stonith-enabled="false"
+crm configure property no-quorum-policy=ignore
+crm configure property default-resource-stickiness="100"
+
+
 
 touch /var/vagrant_provision
 echo "Provisioning finished."
