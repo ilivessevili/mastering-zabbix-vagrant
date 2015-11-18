@@ -1,5 +1,6 @@
 #!/bin/sh
-
+# reset locale to en_US
+export LC_ALL=en_US
 if [ -f "/var/vagrant_provision" ]; then
     exit 0
 fi
